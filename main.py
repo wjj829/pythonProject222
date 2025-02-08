@@ -90,6 +90,7 @@ class BlockGame:
         self.grid = [[0] * COLS for _ in range(ROWS)]  # 初始化一个全为0的二维列表,用于存储方块的位置
         self.selected = None  # 当前选中的方块坐标
         self.score=0#游戏得分
+        self.animating = False
         # 生成方块并确保没有连续的三个或更多相同方块
         for row in range(ROWS):
             for col in range(COLS):
@@ -144,8 +145,22 @@ class BlockGame:
     def draw_score(self):
         #绘制分数显示
         font = pygame.font.Font(None, 36)#pygame.font.Font是pygame库中用于创建字体对象的函数
-        text = font.render(f"得分: {self.score}", True, (0, 0, 0))#True表示是否使用抗锯齿抗锯齿可以使文本看起来更平滑
+        text = font.render(f"SCORE: {self.score}", True, (0, 0, 0))#True表示是否使用抗锯齿抗锯齿可以使文本看起来更平滑
         self.screen.blit(text, (20, 10))
+    def check_game_over(self):
+        """检查游戏是否胜利"""
+        if self.score >= 1000:
+            self.show_game_over()
+    def show_game_over(self):
+        """显示游戏胜利信息"""
+        font = pygame.font.Font(None, 48)
+        text = font.render("游戏胜利！", True, (255, 0, 0))
+        text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+        self.screen.blit(text, text_rect)
+        pygame.display.update()
+        pygame.time.wait(3000)  # 显示3秒后退出
+        pygame.quit()
+        sys.exit()
     def find_matches(self):
         #查找所有可以消除的方块
         matches = set()#初始化一个空集合，用于存储可以消除的方块的坐标
@@ -225,6 +240,21 @@ class BlockGame:
                             matches = self.find_matches()
                 # 清除选中状态
                 self.selected = None
+    def show_game_over(self):
+        """显示游戏胜利信息"""
+        self.screen.fill((0, 0, 0))  # 黑屏背景
+        font = pygame.font.Font(None, 50)
+        text = font.render("GAME OVER", True, (255, 0, 0))
+        text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+        self.screen.blit(text, text_rect)
+        pygame.display.update()#刷新屏幕，使更改显示出来
+        pygame.time.wait(5000)  # 显示5秒后退出
+        pygame.quit()
+        sys.exit()
+    def check_game_over(self):
+        """检查游戏是否胜利"""
+        if self.score >= 10000:
+            self.show_game_over()
     def run(self):
         #游戏主循环
         running = True#用于控制游戏循环是否继续
@@ -239,6 +269,8 @@ class BlockGame:
             self.draw_grid()
             pygame.display.update()#使用pygame.display.update()更新整个待显示的 Surface 对象到屏幕上
             self.clock.tick(10)  # 控制帧率 即游戏每秒最多更新的次数
+            #检查游戏是否顺利
+            self.check_game_over()
         pygame.quit()
         sys.exit()
 
