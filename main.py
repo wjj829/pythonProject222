@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import time
 # 游戏配置常量
 WINDOW_WIDTH = 450  # 窗口宽度
 WINDOW_HEIGHT = 500  # 窗口高度
@@ -14,6 +15,36 @@ IMAGES = [  # 方块图片路径
     't4.jpg',
     't5.jpg'
 ]
+class LoadingScreen:
+    '''加载界面类'''
+    def __init__(self, screen):#__init__方法是类的构造函数，用于初始化类
+        self.screen = screen
+        self.font = pygame.font.Font(None, 48)#字体大小为48像素，使用默认字体
+        self.loading_text = self.font.render("Loading...", True, (255, 255, 255))
+        self.progress = 0#初始化加载进度为0，表示加载过程尚未开始
+
+    def update(self):
+        """更新加载进度"""
+        self.screen.fill((0, 0, 0))#将整个屏幕填充为黑色
+        # 绘制加载文字
+        text_rect = self.loading_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))#获取文本的矩形区域，并将其放在屏幕中央
+        self.screen.blit(self.loading_text, text_rect)#将文本绘制到屏幕上
+
+        # 绘制进度条
+        pygame.draw.rect(self.screen, (255, 255, 255),#首先绘制一个白色的边框，表示进度条的外框
+                         (50, WINDOW_HEIGHT - 80, WINDOW_WIDTH - 100, 20), 2)
+        pygame.draw.rect(self.screen, (0, 255, 0),#然后绘制一个绿色的矩形，表示当前的加载进度。进度条的长度通过self.progress动态计算
+                         (52, WINDOW_HEIGHT - 78, (WINDOW_WIDTH - 104) * self.progress, 16))
+
+        pygame.display.flip()#更新屏幕显示
+
+    def run(self):
+        """执行加载过程"""
+        for i in range(101):#循环101次，表示加载进度从0到100
+            self.progress = i / 100
+            self.update()
+            time.sleep(0.02)
+        time.sleep(0.5)#加载完成后暂停0.5s
 
 class BlockGame:
     '''主游戏类'''
@@ -26,6 +57,11 @@ class BlockGame:
         # 创建游戏窗口
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption("开心消消乐")
+
+        # 显示加载界面
+        loading = LoadingScreen(self.screen)
+        loading.run()
+
         # 加载资源
         self.load_resources()
 
@@ -53,6 +89,7 @@ class BlockGame:
         # 初始化游戏状态
         self.grid = [[0] * COLS for _ in range(ROWS)]  # 初始化一个全为0的二维列表,用于存储方块的位置
         self.selected = None  # 当前选中的方块坐标
+        self.score=0#游戏得分
         # 生成方块并确保没有连续的三个或更多相同方块
         for row in range(ROWS):
             for col in range(COLS):
@@ -103,6 +140,12 @@ class BlockGame:
                         rect=(x-2,y-2,GRID_SIZE+2,GRID_SIZE+2),#(x-2,y-2)是矩形的左上角坐标
                         width=3#矩形边框的宽度
                     )
+        self.draw_score()
+    def draw_score(self):
+        #绘制分数显示
+        font = pygame.font.Font(None, 36)#pygame.font.Font是pygame库中用于创建字体对象的函数
+        text = font.render(f"得分: {self.score}", True, (0, 0, 0))#True表示是否使用抗锯齿抗锯齿可以使文本看起来更平滑
+        self.screen.blit(text, (20, 10))
     def find_matches(self):
         #查找所有可以消除的方块
         matches = set()#初始化一个空集合，用于存储可以消除的方块的坐标
@@ -144,6 +187,7 @@ class BlockGame:
             for row in range(ROWS):
                 self.grid[row][col] = remaining[ROWS - 1 - row]#从末尾开始取值才能实现反转顺序
 
+        self.score+=len(matches)*100#更新得分
     def swap_blocks(self, pos1, pos2):
         """交换两个方块的位置"""
         row1, col1 = pos1
