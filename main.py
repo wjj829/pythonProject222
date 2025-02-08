@@ -46,15 +46,37 @@ class BlockGame:
                 ) for Img in IMAGES
             ]
         except Exception as e:
-            print("资源加载失败:", e)  #用来储存捕获到的异常对象
+            print("资源加载失败:", e)  #e用来储存捕获到的异常对象
             sys.exit()
 
     def reset_game(self):
-        #初始化游戏状态
-        self.grid=[[random.randint(0,len(self.block_images)-1)
-                      for _ in range(COLS)]
-                     for _ in range(ROWS)] #这个二维列表代表一个游戏网络，每个位置存储一个方块的索引
+        # 初始化游戏状态
+        self.grid = [[0] * COLS for _ in range(ROWS)]  # 初始化一个全为0的二维列表,用于存储方块的位置
         self.selected = None  # 当前选中的方块坐标
+        # 生成方块并确保没有连续的三个或更多相同方块
+        for row in range(ROWS):
+            for col in range(COLS):
+                while True:
+                    # 随机生成一个方块索引
+                    block_index = random.randint(0, len(self.block_images) - 1)
+                    # 检查当前方块是否会导致连续三个或更多相同方块
+                    if not self._check_if3inline(row, col, block_index):
+                        self.grid[row][col] = block_index
+                        break
+
+    def _check_if3inline(self, row, col, block_index):
+        #检查放置当前方块后是否会导致连续三个或更多相同方块
+        # 检查水平方向
+        if col >= 2 and self.grid[row][col - 1] == block_index and self.grid[row][col - 2] == block_index:
+            return True
+        if col <= COLS - 3 and self.grid[row][col + 1] == block_index and self.grid[row][col + 2] == block_index:
+            return True
+        # 检查垂直方向
+        if row >= 2 and self.grid[row - 1][col] == block_index and self.grid[row - 2][col] == block_index:
+            return True
+        if row <= ROWS - 3 and self.grid[row + 1][col] == block_index and self.grid[row + 2][col] == block_index:
+            return True
+        return False#当上述均未执行时，便返回False,意味着没有三个及以上连着的方块
     def draw_grid(self):
         """绘制游戏界面"""
         # 绘制淡蓝色背景
@@ -69,8 +91,8 @@ class BlockGame:
 
                 # 绘制方块图片
                 self.screen.blit(
-                    self.block_images[self.grid[row][col]],
-                    dest=(x,y)
+                self.block_images[self.grid[row][col]],
+                dest=(x,y)
                 )
 
                 # 绘制选中框（黄色边框）
